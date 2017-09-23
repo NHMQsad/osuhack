@@ -37,9 +37,9 @@ public class TestBeatmap {
 		System.out.println("total_pp: " + perf.getPerformance());
 	}
 	
-	//@Test
+	@Test
 	public void test_large() throws FileNotFoundException, BeatmapException {
-		File folder = new File("Z:\\osu!\\Songs");
+		File folder = new File("/home/zipper/.PlayOnLinux/wineprefix/osu_on_linux/drive_c/Program Files/osu!/Songs");
 		BeatmapParser parser = new BeatmapParser();
 		
 		for (File file : folder.listFiles()) {
