@@ -1,12 +1,21 @@
 
 import java.awt.AWTException;
+import java.awt.Dimension;
 import java.awt.MouseInfo;
 import java.awt.Robot;
+import java.awt.Toolkit;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.jnativehook.GlobalScreen;
+import org.jnativehook.NativeHookException;
+import org.jnativehook.keyboard.NativeKeyEvent;
+import org.jnativehook.keyboard.NativeKeyListener;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -32,13 +41,31 @@ import lt.ekgame.beatmap_analyzer.beatmap.osu.OsuObject;
 import lt.ekgame.beatmap_analyzer.parser.BeatmapException;
 import lt.ekgame.beatmap_analyzer.parser.BeatmapParser;
 
-public class Test extends Application {
+public class Test extends Application implements NativeKeyListener {
 	public static GridPane tileButtons = new GridPane();
 	public static ScrollPane root = new ScrollPane();
 	public static ArrayList<File> beatmapFiles;
 	public static Robot robot;
+	public static boolean running = false;
+	public static boolean inOsu = false;
+	public static List<OsuObject> circles;
 	public static void main(String[] args) throws FileNotFoundException, BeatmapException, AWTException {
 		// TODO Auto-generated method stub
+		try {
+			GlobalScreen.registerNativeHook();
+		}
+		catch (NativeHookException ex) {
+			System.err.println("There was a problem registering the native hook.");
+			System.err.println(ex.getMessage());
+
+			System.exit(1);
+		}
+		Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
+		logger.setLevel(Level.OFF);
+
+		// Don't forget to disable the parent handlers.
+		logger.setUseParentHandlers(false);
+		GlobalScreen.addNativeKeyListener(new Test());
 		robot = new Robot();
 		File folder = new File("/home/zipper/.PlayOnLinux/wineprefix/osu_on_linux/drive_c/Program Files/osu!/Songs");
 		beatmapFiles = new ArrayList<File>();
@@ -181,18 +208,50 @@ public class Test extends Application {
 	public static void doMap(File mapFile) throws FileNotFoundException, BeatmapException {
 		BeatmapParser parser = new BeatmapParser();
 		OsuBeatmap map = parser.parse(mapFile, OsuBeatmap.class);
-		List<OsuObject> circles = map.getHitObjects();
-		int lastTime = 0;
-		for(OsuObject circle : circles) {
+		circles = map.getHitObjects();
+		running = true;
+	}
+	public void doOsu() {
+		inOsu = true;
+		int td1 = 0;
+		int td2 = 0;
+		long secTime = System.nanoTime();
+		int firstNote = circles.get(0).getStartTime();
+		int lastTime = circles.get(0).getStartTime()-1;
+		for(int i = 0; (i < circles.size()); i++) {
+			long startTime = System.nanoTime();
 			int startX = (int)MouseInfo.getPointerInfo().getLocation().getX();
 			int startY = (int)MouseInfo.getPointerInfo().getLocation().getY();
-			int endX = (int)circle.getPosition().getX();
-			int endY = (int)circle.getPosition().getY();
-			int time = circle.getStartTime() - lastTime;
+			int endX = scaleX((int)circles.get(i).getPosition().getX());
+			int endY = scaleY((int)circles.get(i).getPosition().getY());
+			int time = circles.get(i).getStartTime() - lastTime;
 			int ticks = dist(startX, startY, endX, endY);
-			mouseGlide(startX, startY, endX, endY, time, ticks);
-			lastTime = circle.getStartTime();
+			robot.keyRelease(java.awt.event.KeyEvent.VK_Z);
+			robot.mouseMove(endX, endY);
+//			td1 = (int)((System.nanoTime()-startTime)/1000000);
+//			int test = (time-(td1+td2));
+//			System.out.println(test);
+//			int delay = (test) > 0 ? (test) : 0;
+//			System.out.println(time-(td1+td2));
+//			System.out.println(td1);
+//			System.out.println(td2);
+			int test = (int)((circles.get(i).getStartTime()-firstNote) - ((System.nanoTime()-secTime)/1000000.0));
+			int delay = test > 0 ? test : 0;
+			robot.delay(delay);
+			secTime = System.nanoTime();
+			firstNote = circles.get(i).getStartTime();
+			startTime = System.nanoTime();
+			robot.keyPress(java.awt.event.KeyEvent.VK_Z);
+			//mouseGlide(startX, startY, endX, endY, time, ticks);
+			lastTime = circles.get(i).getStartTime();
+			if(!running)  {
+				break;
+			}
+//			td2 = (int)((System.nanoTime()-startTime)/1000000);
 		}
+		robot.keyRelease(java.awt.event.KeyEvent.VK_Z);
+		running = false;
+		inOsu = false;
 	}
 	public static void mouseGlide(int x1, int y1, int x2, int y2, int t, int n) {
 		double dx = (x2 - x1) / ((double) n);
@@ -205,6 +264,45 @@ public class Test extends Application {
 	}
 	public static int dist(int x1, int y1, int x2, int y2) {
 		return (int)(Math.sqrt(((x2-x1)*(x2-x1))+((y2-y1)*(y2-y1))));
+	}
+	
+	public static int scaleX(int smolX) {
+		double factor = (MouseInfo.getPointerInfo().getDevice().getDisplayMode().getWidth()-550)/512.0;
+		return (int)((smolX*factor)+275);
+	}
+	public static int scaleY(int smolY) {
+		double factor = (MouseInfo.getPointerInfo().getDevice().getDisplayMode().getHeight()-150)/384.0;
+		return (int)((smolY*factor)+75);
+	}
+
+	@Override
+	public void nativeKeyPressed(NativeKeyEvent arg0) {
+		// TODO Auto-generated method stub
+			if(running && !inOsu && arg0.getKeyCode() == NativeKeyEvent.VC_S) {
+				new Thread() {
+					public void run() {
+						doOsu();
+					}
+				}.start();
+				System.out.println("startOsu");
+				
+			} else if(running && inOsu && arg0.getKeyCode() == NativeKeyEvent.VC_S) {
+				System.out.println("endOsu");
+				running = false;
+				inOsu = false;
+			}
+	}
+
+	@Override
+	public void nativeKeyReleased(NativeKeyEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void nativeKeyTyped(NativeKeyEvent arg0) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
