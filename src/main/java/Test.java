@@ -40,6 +40,7 @@ import lt.ekgame.beatmap_analyzer.beatmap.osu.OsuBeatmap;
 import lt.ekgame.beatmap_analyzer.beatmap.osu.OsuCircle;
 import lt.ekgame.beatmap_analyzer.beatmap.osu.OsuObject;
 import lt.ekgame.beatmap_analyzer.beatmap.osu.OsuSlider;
+import lt.ekgame.beatmap_analyzer.beatmap.osu.OsuSpinner;
 import lt.ekgame.beatmap_analyzer.parser.BeatmapException;
 import lt.ekgame.beatmap_analyzer.parser.BeatmapParser;
 import lt.ekgame.beatmap_analyzer.utils.Vec2;
@@ -222,6 +223,7 @@ public class Test extends Application implements NativeKeyListener {
 		int firstNote = circles.get(0).getStartTime();
 		long base = System.nanoTime();
 		int lastTime = circles.get(0).getStartTime()-1;
+		long nanosGone = 0;
 		for(int i = 0; (i < circles.size()); i++) {
 			if(circles.get(i) instanceof OsuCircle) {
 				OsuCircle circle = (OsuCircle) circles.get(i);
@@ -242,7 +244,14 @@ public class Test extends Application implements NativeKeyListener {
 	//			System.out.println(td1);
 	//			System.out.println(td2);
 				int test = (int)((circle.getStartTime()-firstNote) - ((System.nanoTime()-secTime)/1000000.0));
-				int delay = (test-(i/100)) > 0 ? (test-(i/100)) : 0;
+//				nanosGone += ((test * 1000000) % 1000000)/4;
+//				int millisTest = ((int) test);
+//				if(nanosGone / 1000000 > 1) {
+//					int millisAdd = (int) (nanosGone/1000000);
+//					nanosGone -= millisAdd * 1000000;
+//					millisTest += millisAdd;
+//				}
+				int delay = (test-1) > 0 ? (test-1) : 0;
 	//			mouseGlide(startX, startY, endX, endY, delay, 100);
 				robot.delay(delay);
 				robot.keyPress(java.awt.event.KeyEvent.VK_Z);
@@ -255,7 +264,7 @@ public class Test extends Application implements NativeKeyListener {
 					break;
 				}
 			}
-			else {
+			else if(circles.get(i) instanceof OsuSlider) {
 				OsuSlider slider = (OsuSlider) circles.get(i);
 				long startTime = System.nanoTime();
 				int startX = (int)MouseInfo.getPointerInfo().getLocation().getX();
@@ -273,8 +282,15 @@ public class Test extends Application implements NativeKeyListener {
 	//			System.out.println(time-(td1+td2));
 	//			System.out.println(td1);
 	//			System.out.println(td2);
-				int test = (int)((circles.get(i).getStartTime()-firstNote) - ((System.nanoTime()-secTime)/1000000.0));
-				int delay = (test-(i/100)) > 0 ? (test-(i/100)) : 0;
+				int test = (int)((slider.getStartTime()-firstNote) - ((System.nanoTime()-secTime)/1000000.0));
+//				nanosGone += ((test * 1000000) % 1000000)/4;
+//				int millisTest = ((int) test);
+//				if(nanosGone / 1000000 > 1) {
+//					int millisAdd = (int) (nanosGone/1000000);
+//					nanosGone -= millisAdd * 1000000;
+//					millisTest += millisAdd;
+//				}
+				int delay = test > 0 ? test : 0;
 	//			mouseGlide(startX, startY, endX, endY, delay, 100);
 				robot.delay(delay);
 				robot.keyPress(java.awt.event.KeyEvent.VK_Z);
@@ -290,8 +306,48 @@ public class Test extends Application implements NativeKeyListener {
 					startY = (int)MouseInfo.getPointerInfo().getLocation().getY();
 					endX = scaleX((int)point.getX());
 					endY = scaleY((int)point.getY());
-					mouseGlide(startX,startY,endX,endY,(totTime/sliderPoints.size()),50);
+					int curTime = (totTime/sliderPoints.size());
+					mouseGlide(startX,startY,endX,endY,curTime - (curTime/10),50);
 				}
+				if(!running)  {
+					break;
+				}
+			}
+			else {
+				OsuSpinner circle = (OsuSpinner) circles.get(i);
+				long startTime = System.nanoTime();
+				int startX = (int)MouseInfo.getPointerInfo().getLocation().getX();
+				int startY = (int)MouseInfo.getPointerInfo().getLocation().getY();
+				int endX = scaleX((int)circle.getPosition().getX());
+				int endY = scaleY((int)circle.getPosition().getY());
+				int time = circles.get(i).getStartTime() - lastTime;
+				int ticks = dist(startX, startY, endX, endY);
+//				robot.keyRelease(java.awt.event.KeyEvent.VK_Z);
+//				robot.mouseMove(endX, endY);
+	//			td1 = (int)((System.nanoTime()-startTime)/1000000);
+	//			int test = (time-(td1+td2));
+	//			System.out.println(test);
+	//			int delay = (test) > 0 ? (test) : 0;
+	//			System.out.println(time-(td1+td2));
+	//			System.out.println(td1);
+	//			System.out.println(td2);
+				int test = (int)((circle.getStartTime()-firstNote) - ((System.nanoTime()-secTime)/1000000.0));
+//				nanosGone += ((test * 1000000) % 1000000)/4;
+//				int millisTest = ((int) test);
+//				if(nanosGone / 1000000 > 1) {
+//					int millisAdd = (int) (nanosGone/1000000);
+//					nanosGone -= millisAdd * 1000000;
+//					millisTest += millisAdd;
+//				}
+				int delay = (test-1) > 0 ? (test-1) : 0;
+	//			mouseGlide(startX, startY, endX, endY, delay, 100);
+				robot.delay(delay);
+//				robot.keyPress(java.awt.event.KeyEvent.VK_Z);
+				secTime = System.nanoTime();
+				firstNote = circle.getStartTime();
+				startTime = System.nanoTime();
+				//mouseGlide(startX, startY, endX, endY, time, ticks);
+				lastTime = circle.getStartTime();
 				if(!running)  {
 					break;
 				}
