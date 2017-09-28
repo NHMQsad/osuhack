@@ -37,9 +37,12 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import lt.ekgame.beatmap_analyzer.beatmap.Beatmap;
 import lt.ekgame.beatmap_analyzer.beatmap.osu.OsuBeatmap;
+import lt.ekgame.beatmap_analyzer.beatmap.osu.OsuCircle;
 import lt.ekgame.beatmap_analyzer.beatmap.osu.OsuObject;
+import lt.ekgame.beatmap_analyzer.beatmap.osu.OsuSlider;
 import lt.ekgame.beatmap_analyzer.parser.BeatmapException;
 import lt.ekgame.beatmap_analyzer.parser.BeatmapParser;
+import lt.ekgame.beatmap_analyzer.utils.Vec2;
 
 public class Test extends Application implements NativeKeyListener {
 	public static GridPane tileButtons = new GridPane();
@@ -217,35 +220,81 @@ public class Test extends Application implements NativeKeyListener {
 		int td2 = 0;
 		long secTime = System.nanoTime();
 		int firstNote = circles.get(0).getStartTime();
+		long base = System.nanoTime();
 		int lastTime = circles.get(0).getStartTime()-1;
 		for(int i = 0; (i < circles.size()); i++) {
-			long startTime = System.nanoTime();
-			int startX = (int)MouseInfo.getPointerInfo().getLocation().getX();
-			int startY = (int)MouseInfo.getPointerInfo().getLocation().getY();
-			int endX = scaleX((int)circles.get(i).getPosition().getX());
-			int endY = scaleY((int)circles.get(i).getPosition().getY());
-			int time = circles.get(i).getStartTime() - lastTime;
-			int ticks = dist(startX, startY, endX, endY);
-			robot.keyRelease(java.awt.event.KeyEvent.VK_Z);
-			robot.mouseMove(endX, endY);
-//			td1 = (int)((System.nanoTime()-startTime)/1000000);
-//			int test = (time-(td1+td2));
-//			System.out.println(test);
-//			int delay = (test) > 0 ? (test) : 0;
-//			System.out.println(time-(td1+td2));
-//			System.out.println(td1);
-//			System.out.println(td2);
-			int test = (int)((circles.get(i).getStartTime()-firstNote) - ((System.nanoTime()-secTime)/1000000.0));
-			int delay = test > 0 ? test : 0;
-			robot.delay(delay);
-			secTime = System.nanoTime();
-			firstNote = circles.get(i).getStartTime();
-			startTime = System.nanoTime();
-			robot.keyPress(java.awt.event.KeyEvent.VK_Z);
-			//mouseGlide(startX, startY, endX, endY, time, ticks);
-			lastTime = circles.get(i).getStartTime();
-			if(!running)  {
-				break;
+			if(circles.get(i) instanceof OsuCircle) {
+				OsuCircle circle = (OsuCircle) circles.get(i);
+				long startTime = System.nanoTime();
+				int startX = (int)MouseInfo.getPointerInfo().getLocation().getX();
+				int startY = (int)MouseInfo.getPointerInfo().getLocation().getY();
+				int endX = scaleX((int)circle.getPosition().getX());
+				int endY = scaleY((int)circle.getPosition().getY());
+				int time = circles.get(i).getStartTime() - lastTime;
+				int ticks = dist(startX, startY, endX, endY);
+				robot.keyRelease(java.awt.event.KeyEvent.VK_Z);
+				robot.mouseMove(endX, endY);
+	//			td1 = (int)((System.nanoTime()-startTime)/1000000);
+	//			int test = (time-(td1+td2));
+	//			System.out.println(test);
+	//			int delay = (test) > 0 ? (test) : 0;
+	//			System.out.println(time-(td1+td2));
+	//			System.out.println(td1);
+	//			System.out.println(td2);
+				int test = (int)((circle.getStartTime()-firstNote) - ((System.nanoTime()-secTime)/1000000.0));
+				int delay = (test-(i/100)) > 0 ? (test-(i/100)) : 0;
+	//			mouseGlide(startX, startY, endX, endY, delay, 100);
+				robot.delay(delay);
+				robot.keyPress(java.awt.event.KeyEvent.VK_Z);
+				secTime = System.nanoTime();
+				firstNote = circle.getStartTime();
+				startTime = System.nanoTime();
+				//mouseGlide(startX, startY, endX, endY, time, ticks);
+				lastTime = circle.getStartTime();
+				if(!running)  {
+					break;
+				}
+			}
+			else {
+				OsuSlider slider = (OsuSlider) circles.get(i);
+				long startTime = System.nanoTime();
+				int startX = (int)MouseInfo.getPointerInfo().getLocation().getX();
+				int startY = (int)MouseInfo.getPointerInfo().getLocation().getY();
+				int endX = scaleX((int)slider.getPosition().getX());
+				int endY = scaleY((int)slider.getPosition().getY());
+				int time = slider.getStartTime() - lastTime;
+				int ticks = dist(startX, startY, endX, endY);
+				robot.keyRelease(java.awt.event.KeyEvent.VK_Z);
+				robot.mouseMove(endX, endY);
+	//			td1 = (int)((System.nanoTime()-startTime)/1000000);
+	//			int test = (time-(td1+td2));
+	//			System.out.println(test);
+	//			int delay = (test) > 0 ? (test) : 0;
+	//			System.out.println(time-(td1+td2));
+	//			System.out.println(td1);
+	//			System.out.println(td2);
+				int test = (int)((circles.get(i).getStartTime()-firstNote) - ((System.nanoTime()-secTime)/1000000.0));
+				int delay = (test-(i/100)) > 0 ? (test-(i/100)) : 0;
+	//			mouseGlide(startX, startY, endX, endY, delay, 100);
+				robot.delay(delay);
+				robot.keyPress(java.awt.event.KeyEvent.VK_Z);
+				secTime = System.nanoTime();
+				firstNote = circles.get(i).getStartTime();
+				startTime = System.nanoTime();
+				//mouseGlide(startX, startY, endX, endY, time, ticks);
+				lastTime = slider.getStartTime();
+				List<Vec2> sliderPoints = slider.getSliderPoints();
+				int totTime = slider.getEndTime()-slider.getStartTime();
+				for(Vec2 point : sliderPoints) {
+					startX = (int)MouseInfo.getPointerInfo().getLocation().getX();
+					startY = (int)MouseInfo.getPointerInfo().getLocation().getY();
+					endX = scaleX((int)point.getX());
+					endY = scaleY((int)point.getY());
+					mouseGlide(startX,startY,endX,endY,(totTime/sliderPoints.size()),50);
+				}
+				if(!running)  {
+					break;
+				}
 			}
 //			td2 = (int)((System.nanoTime()-startTime)/1000000);
 		}
