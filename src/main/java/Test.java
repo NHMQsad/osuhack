@@ -233,7 +233,7 @@ public class Test extends Application implements NativeKeyListener {
 				int endX = scaleX((int)circle.getPosition().getX());
 				int endY = scaleY((int)circle.getPosition().getY());
 				int time = circles.get(i).getStartTime() - lastTime;
-				int ticks = dist(startX, startY, endX, endY);
+				//int ticks = dist(startX, startY, endX, endY);
 				robot.keyRelease(java.awt.event.KeyEvent.VK_Z);
 				robot.mouseMove(endX, endY);
 	//			td1 = (int)((System.nanoTime()-startTime)/1000000);
@@ -272,7 +272,7 @@ public class Test extends Application implements NativeKeyListener {
 				int endX = scaleX((int)slider.getPosition().getX());
 				int endY = scaleY((int)slider.getPosition().getY());
 				int time = slider.getStartTime() - lastTime;
-				int ticks = dist(startX, startY, endX, endY);
+				//int ticks = dist(startX, startY, endX, endY);
 				robot.keyRelease(java.awt.event.KeyEvent.VK_Z);
 				robot.mouseMove(endX, endY);
 	//			td1 = (int)((System.nanoTime()-startTime)/1000000);
@@ -300,6 +300,14 @@ public class Test extends Application implements NativeKeyListener {
 				//mouseGlide(startX, startY, endX, endY, time, ticks);
 				lastTime = slider.getStartTime();
 				List<Vec2> sliderPoints = slider.getSliderPoints();
+//				double distTotal = 0;
+//				double startXv = scaleX((int)sliderPoints.get(0).getX());
+//				double startYv = scaleY((int)sliderPoints.get(0).getY());
+//				for(int j = 1; j < sliderPoints.size(); j++) {
+//					distTotal += dist(startXv,startYv,scaleX((int)sliderPoints.get(j).getX()),scaleY((int)sliderPoints.get(j).getY()));
+//					startXv = scaleX((int)sliderPoints.get(j).getX());
+//					startYv = scaleY((int)sliderPoints.get(j).getY());
+//				}
 				int totTime = slider.getEndTime()-slider.getStartTime();
 				for(Vec2 point : sliderPoints) {
 					startX = (int)MouseInfo.getPointerInfo().getLocation().getX();
@@ -307,6 +315,7 @@ public class Test extends Application implements NativeKeyListener {
 					endX = scaleX((int)point.getX());
 					endY = scaleY((int)point.getY());
 					int curTime = (totTime/sliderPoints.size());
+					System.out.println(curTime);
 					mouseGlide(startX,startY,endX,endY,curTime - (curTime/10),50);
 				}
 				if(!running)  {
@@ -318,10 +327,9 @@ public class Test extends Application implements NativeKeyListener {
 				long startTime = System.nanoTime();
 				int startX = (int)MouseInfo.getPointerInfo().getLocation().getX();
 				int startY = (int)MouseInfo.getPointerInfo().getLocation().getY();
-				int endX = scaleX((int)circle.getPosition().getX());
-				int endY = scaleY((int)circle.getPosition().getY());
+				int endX = scaleX(256);
+				int endY = scaleY(192);
 				int time = circles.get(i).getStartTime() - lastTime;
-				int ticks = dist(startX, startY, endX, endY);
 //				robot.keyRelease(java.awt.event.KeyEvent.VK_Z);
 //				robot.mouseMove(endX, endY);
 	//			td1 = (int)((System.nanoTime()-startTime)/1000000);
@@ -331,7 +339,7 @@ public class Test extends Application implements NativeKeyListener {
 	//			System.out.println(time-(td1+td2));
 	//			System.out.println(td1);
 	//			System.out.println(td2);
-				int test = (int)((circle.getStartTime()-firstNote) - ((System.nanoTime()-secTime)/1000000.0));
+				int test = (int)((circle.getEndTime()-firstNote) - ((System.nanoTime()-secTime)/1000000.0));
 //				nanosGone += ((test * 1000000) % 1000000)/4;
 //				int millisTest = ((int) test);
 //				if(nanosGone / 1000000 > 1) {
@@ -341,7 +349,18 @@ public class Test extends Application implements NativeKeyListener {
 //				}
 				int delay = (test-1) > 0 ? (test-1) : 0;
 	//			mouseGlide(startX, startY, endX, endY, delay, 100);
-				robot.delay(delay);
+				long start = System.nanoTime();
+				int degs = 0;
+				robot.keyPress(java.awt.event.KeyEvent.VK_Z);
+				while(((System.nanoTime()-start)/1000000) < delay) {
+					int x = scaleX(256+((int)(Math.cos(degs)*75)));
+					int y = scaleY(192+((int)(Math.sin(degs)*75)));
+					robot.mouseMove(x,y);
+					degs+=1;
+					degs = degs%360;
+					System.out.println("turning");
+					robot.delay(1);
+				}
 //				robot.keyPress(java.awt.event.KeyEvent.VK_Z);
 				secTime = System.nanoTime();
 				firstNote = circle.getStartTime();
@@ -367,8 +386,8 @@ public class Test extends Application implements NativeKeyListener {
 	        robot.mouseMove((int) (x1 + dx * step), (int) (y1 + dy * step));
 	    }
 	}
-	public static int dist(int x1, int y1, int x2, int y2) {
-		return (int)(Math.sqrt(((x2-x1)*(x2-x1))+((y2-y1)*(y2-y1))));
+	public static double dist(double startXv, double startYv, double d, double e) {
+		return (Math.sqrt(((d-startXv)*(d-startXv))+((e-startYv)*(e-startYv))));
 	}
 	
 	public static int scaleX(int smolX) {
